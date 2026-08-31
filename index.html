@@ -3,301 +3,99 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Scratchで作られたコンピューター対戦将棋">
-  <title>将棋 — コンピューター対戦</title>
+  <title>将棋・内蔵AI強化版</title>
+  <meta name="description" content="合法手生成、定跡、脅威検出、駒得、安全度評価を使うScratch将棋AIです。">
   <style>
     :root {
       color-scheme: light;
-      --ink: #241b13;
-      --paper: #f7efd9;
-      --paper-deep: #e8d3a4;
-      --accent: #8b2e24;
-      --wood: #bd7b36;
-      --shadow: rgba(43, 27, 13, 0.18);
+      --ink: #2f241d;
+      --paper: #fffaf0;
+      --line: #dfccb1;
+      --accent: #9d3022;
+      --accent-dark: #742116;
+      --gold: #d99a24;
     }
-
     * { box-sizing: border-box; }
-
     body {
-      min-height: 100vh;
       margin: 0;
       color: var(--ink);
       background:
-        radial-gradient(circle at 15% 12%, rgba(255,255,255,.78), transparent 28rem),
-        repeating-linear-gradient(88deg, rgba(92,52,18,.025) 0 1px, transparent 1px 8px),
-        var(--paper);
-      font-family: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+        radial-gradient(circle at 15% 0%, #fff 0, transparent 28rem),
+        repeating-linear-gradient(90deg, #f4ead6 0, #f4ead6 2px, #f7efdf 2px, #f7efdf 6px);
+      font-family: system-ui, -apple-system, "Yu Gothic", "Meiryo", sans-serif;
     }
-
-    main {
-      width: min(960px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 42px 0 56px;
-    }
-
-    header {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 20px;
-      margin-bottom: 22px;
-    }
-
-    .eyebrow {
-      margin: 0 0 6px;
-      color: var(--accent);
-      font: 700 .76rem/1.2 system-ui, sans-serif;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(2.1rem, 7vw, 4.2rem);
-      font-weight: 600;
-      line-height: 1;
-      letter-spacing: .08em;
-    }
-
-    .seal {
-      display: grid;
-      width: 58px;
-      aspect-ratio: 1;
-      place-items: center;
-      flex: 0 0 auto;
-      color: #fff8e8;
-      background: var(--accent);
-      border-radius: 4px;
-      box-shadow: 0 6px 16px var(--shadow);
-      font-size: 1.35rem;
-      line-height: 1;
-    }
-
-    .player-shell {
-      padding: clamp(10px, 2.4vw, 22px);
-      overflow: hidden;
-      background: linear-gradient(135deg, #d89a55, var(--wood));
-      border: 1px solid rgba(78,43,14,.45);
-      border-radius: 14px;
-      box-shadow: 0 22px 60px var(--shadow), inset 0 1px rgba(255,255,255,.42);
-    }
-
-    .player-frame {
-      position: relative;
-      width: min(100%, 722px);
-      aspect-ratio: 482 / 412;
-      margin: 0 auto;
-      overflow: hidden;
-      background: #fff;
-      border: 1px solid rgba(55,34,17,.42);
-      border-radius: 7px;
-    }
-
-    iframe {
-      display: block;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    .local-notice {
-      display: none;
-      height: 100%;
-      padding: 32px;
-      place-content: center;
-      text-align: center;
-      font-family: system-ui, sans-serif;
-    }
-
-    .local-notice strong { display: block; margin-bottom: 8px; }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
+    main { width: min(1120px, calc(100% - 28px)); margin: 0 auto; padding: 28px 0 42px; }
+    header { display: grid; gap: 10px; margin-bottom: 18px; }
+    h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.65rem); letter-spacing: .04em; }
+    .lead { margin: 0; max-width: 58rem; line-height: 1.75; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
     .button {
-      display: inline-flex;
-      min-height: 44px;
-      padding: 0 17px;
-      align-items: center;
-      justify-content: center;
-      color: var(--ink);
-      background: rgba(255,255,255,.52);
-      border: 1px solid rgba(65,40,17,.26);
-      border-radius: 999px;
-      font: 650 .9rem/1 system-ui, sans-serif;
-      text-decoration: none;
-      transition: transform .15s ease, background .15s ease;
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 46px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px;
+      color: var(--ink); background: rgba(255, 250, 240, .9); text-decoration: none; font-weight: 700;
     }
-
-    .button:hover {
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.9);
+    .button.primary { border-color: var(--accent); color: white; background: var(--accent); }
+    .button:hover { transform: translateY(-1px); box-shadow: 0 5px 16px #4c28141d; }
+    .game-shell, .card {
+      border: 1px solid var(--line); border-radius: 18px; background: rgba(255, 250, 240, .88);
+      box-shadow: 0 14px 40px #5e381416; overflow: hidden;
     }
-
-    .button.primary {
-      color: #fff9ed;
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .note {
-      margin: 22px 2px 0;
-      color: #594738;
-      font: .85rem/1.7 system-ui, sans-serif;
-    }
-
-    .ai-settings {
-      margin-top: 22px;
-      padding: 18px;
-      background: rgba(255,255,255,.38);
-      border: 1px solid rgba(65,40,17,.18);
-      border-radius: 12px;
-      font-family: system-ui, sans-serif;
-    }
-
-    .ai-settings h2 { margin: 0 0 6px; font-size: 1rem; }
-    .ai-settings p { margin: 0 0 12px; color: #594738; font-size: .82rem; line-height: 1.55; }
-    .endpoint-row { display: flex; gap: 8px; }
-    .endpoint-row input {
-      min-width: 0;
-      flex: 1 1 auto;
-      padding: 11px 13px;
-      color: var(--ink);
-      background: rgba(255,255,255,.82);
-      border: 1px solid rgba(65,40,17,.3);
-      border-radius: 8px;
-      font: .84rem/1.2 system-ui, sans-serif;
-    }
-    .endpoint-row button { cursor: pointer; }
-    .setting-status { min-height: 1.3em; margin: 9px 2px 0 !important; color: var(--accent) !important; }
-
-    @media (max-width: 540px) {
-      main { width: min(100% - 20px, 960px); padding-top: 24px; }
-      header { align-items: center; }
-      .seal { width: 48px; font-size: 1.1rem; }
-      .player-shell { padding: 7px; border-radius: 10px; }
-      .actions { display: grid; grid-template-columns: 1fr; }
-      .endpoint-row { flex-direction: column; }
-    }
+    .game-frame { width: 100%; aspect-ratio: 4 / 3; border: 0; display: block; background: #fff; }
+    .notice { padding: 28px; line-height: 1.75; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+    .card { padding: 18px; }
+    .card h2 { margin: 0 0 8px; font-size: 1.05rem; }
+    .card p { margin: 0; line-height: 1.65; }
+    footer { margin-top: 18px; color: #6e594a; font-size: .92rem; line-height: 1.7; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main>
     <header>
-      <div>
-        <p class="eyebrow">Scratch / vs computer</p>
-        <h1>将棋</h1>
-      </div>
-      <div class="seal" aria-hidden="true">王将</div>
+      <h1>将棋・内蔵AI強化版</h1>
+      <p class="lead">あなたが先手、コンピューターが後手です。AIは毎手、盤上移動と持ち駒打ちの合法候補を作り、定跡・攻撃されている駒・取り返し・駒得・移動先の危険度・成りを比較して指します。</p>
     </header>
 
-    <section class="player-shell" aria-label="将棋ゲーム">
-      <div class="player-frame">
-        <iframe id="player" title="Scratch 将棋プレイヤー" allowfullscreen></iframe>
-        <div id="local-notice" class="local-notice">
-          <div>
-            <strong>GitHub Pagesで公開すると、ここにゲームが表示されます。</strong>
-            ローカルで遊ぶ場合は、下の「Scratchファイルを保存」からファイルを開いてください。
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <nav class="actions" aria-label="プロジェクト操作">
-      <a class="button primary" id="open-player" href="#" target="_blank" rel="noopener">TurboWarpで開く</a>
+    <nav class="actions" aria-label="起動とダウンロード">
+      <a class="button primary" id="open-player" href="https://turbowarp.org/" target="_blank" rel="noopener">TurboWarpで開く</a>
       <a class="button" href="project.sb3" download>Scratchファイルを保存</a>
       <a class="button" href="scratch-src/project.json">ソースJSONを見る</a>
     </nav>
 
-    <section class="ai-settings" aria-labelledby="ai-settings-title">
-      <h2 id="ai-settings-title">ChatGPT接続設定</h2>
-      <p>配置した中継Workerの <code>https://…/move</code> を入力します。APIキーそのものは入力しません。未設定・通信失敗時も内蔵評価で対局できます。</p>
-      <form id="endpoint-form" class="endpoint-row">
-        <input id="endpoint" type="url" inputmode="url" autocomplete="url" placeholder="https://scratch-shogi-ai.example.workers.dev/move" aria-label="AI接続先URL">
-        <button class="button primary" type="submit">保存して再読込</button>
-      </form>
-      <p id="setting-status" class="setting-status" role="status"></p>
+    <section class="game-shell" id="game" aria-label="将棋ゲーム">
+      <p class="notice">ゲームを準備しています…</p>
     </section>
 
-    <p class="note">あなたは先手、コンピューターは後手です。コンピューターは毎回、盤上移動と持ち駒打ちを含む候補一覧を作り、ChatGPTの返答が一覧内にあることを再確認してから指します。</p>
+    <section class="grid" aria-label="AIの特徴">
+      <article class="card"><h2>相手の利きを確認</h2><p>先手の全駒の移動規則から攻撃範囲を作り、後手の高価値な駒が狙われていれば、逃げる手や攻撃駒を取る手を優先します。</p></article>
+      <article class="card"><h2>盤外移動を二重防止</h2><p>移動元と移動先の両方を81マスの一覧で検証してから候補に加えます。</p></article>
+      <article class="card"><h2>外部設定なし</h2><p>AIはScratch内に収録済みです。APIキー、ChatGPT接続先、Cloudflare Workerは不要です。</p></article>
+    </section>
+
+    <footer>標準Scratchへは「Scratchファイルを保存」で取得した <code>project.sb3</code> を読み込んでください。GitHub Pagesで公開すると、このページ内でもTurboWarp版を遊べます。</footer>
   </main>
 
   <script>
-    const storageKey = "scratchShogiAiEndpoint";
-    const endpointInput = document.querySelector("#endpoint");
-    const status = document.querySelector("#setting-status");
-    const savedEndpoint = localStorage.getItem(storageKey) || "";
-    endpointInput.value = savedEndpoint;
+    const projectUrl = new URL("project.sb3", location.href).href;
+    const playerUrl = new URL("https://turbowarp.org/embed");
+    playerUrl.searchParams.set("project_url", projectUrl);
+    playerUrl.searchParams.set("autoplay", "");
+    playerUrl.searchParams.set("settings-button", "");
+    playerUrl.searchParams.set("fullscreen-background", "#fffaf0");
+    document.querySelector("#open-player").href = playerUrl.href.replace("/embed", "/");
 
-    const extensionUrl = new URL("ai-extension.js", window.location.href);
-    if (savedEndpoint) extensionUrl.searchParams.set("endpoint", savedEndpoint);
-    const projectUrl = new URL("project.sb3", window.location.href);
-    const openUrl = new URL("https://turbowarp.org/");
-    openUrl.searchParams.set("project_url", projectUrl.href);
-    openUrl.searchParams.set("extension", extensionUrl.href);
-    document.querySelector("#open-player").href = openUrl.href;
-
-    async function checkAiConnection() {
-      if (!savedEndpoint) {
-        status.textContent = "AI接続先は未設定です。現在は内蔵AIで動作します。";
-        return;
-      }
-      if (typeof fetch !== "function") return;
-      const healthUrl = new URL(savedEndpoint);
-      healthUrl.pathname = healthUrl.pathname.replace(/\/move\/?$/, "/health");
-      status.textContent = "ChatGPT接続を確認中です…";
-      try {
-        const response = await fetch(healthUrl.href, { cache: "no-store" });
-        const data = await response.json();
-        if (!response.ok || !data.ok) throw new Error(`HTTP ${response.status}`);
-        if (!data.openai_configured) {
-          status.textContent = "Workerには接続できましたが、OPENAI_API_KEYが未設定です。現在は内蔵AIになります。";
-          return;
-        }
-        status.textContent = `ChatGPT接続OK：${data.model || "設定モデル"} / reasoning ${data.reasoning_effort || "設定値"} / ${data.engine_version || "旧Worker"}`;
-      } catch {
-        status.textContent = "Workerへ接続できません。URL・配置・CORSを確認してください。現在は内蔵AIになります。";
-      }
-    }
-    void checkAiConnection();
-
-    if (window.location.protocol === "http:" || window.location.protocol === "https:") {
-      const embedUrl = new URL("https://turbowarp.org/embed");
-      embedUrl.searchParams.set("project_url", projectUrl.href);
-      embedUrl.searchParams.set("extension", extensionUrl.href);
-      embedUrl.searchParams.set("settings-button", "");
-      document.querySelector("#player").src = embedUrl.href;
+    const game = document.querySelector("#game");
+    if (location.protocol === "http:" || location.protocol === "https:") {
+      const frame = document.createElement("iframe");
+      frame.className = "game-frame";
+      frame.title = "将棋・内蔵AI強化版";
+      frame.allow = "fullscreen; autoplay";
+      frame.src = playerUrl.href;
+      game.replaceChildren(frame);
     } else {
-      document.querySelector("#player").remove();
-      document.querySelector("#local-notice").style.display = "grid";
-      document.querySelector("#open-player").style.display = "none";
+      game.innerHTML = '<p class="notice">このページをGitHub Pagesで公開すると、ここにゲームが表示されます。手元で試す場合は、上の「Scratchファイルを保存」から <code>project.sb3</code> をScratchまたはTurboWarpへ読み込んでください。</p>';
     }
-
-    document.querySelector("#endpoint-form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      const value = endpointInput.value.trim();
-      if (value) {
-        let parsed;
-        try { parsed = new URL(value); } catch { status.textContent = "正しいURLを入力してください。"; return; }
-        if (parsed.protocol !== "https:" && !(parsed.protocol === "http:" && parsed.hostname === "localhost")) {
-          status.textContent = "HTTPSのURLを入力してください。";
-          return;
-        }
-        if (!/\/move\/?$/.test(parsed.pathname)) {
-          status.textContent = "Worker URLの末尾は /move にしてください。";
-          return;
-        }
-        localStorage.setItem(storageKey, parsed.href);
-      } else {
-        localStorage.removeItem(storageKey);
-      }
-      status.textContent = "保存しました。ゲームを再読み込みします。";
-      window.location.reload();
-    });
   </script>
 </body>
 </html>
