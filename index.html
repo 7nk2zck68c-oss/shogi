@@ -150,12 +150,38 @@
       font: .85rem/1.7 system-ui, sans-serif;
     }
 
+    .ai-settings {
+      margin-top: 22px;
+      padding: 18px;
+      background: rgba(255,255,255,.38);
+      border: 1px solid rgba(65,40,17,.18);
+      border-radius: 12px;
+      font-family: system-ui, sans-serif;
+    }
+
+    .ai-settings h2 { margin: 0 0 6px; font-size: 1rem; }
+    .ai-settings p { margin: 0 0 12px; color: #594738; font-size: .82rem; line-height: 1.55; }
+    .endpoint-row { display: flex; gap: 8px; }
+    .endpoint-row input {
+      min-width: 0;
+      flex: 1 1 auto;
+      padding: 11px 13px;
+      color: var(--ink);
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(65,40,17,.3);
+      border-radius: 8px;
+      font: .84rem/1.2 system-ui, sans-serif;
+    }
+    .endpoint-row button { cursor: pointer; }
+    .setting-status { min-height: 1.3em; margin: 9px 2px 0 !important; color: var(--accent) !important; }
+
     @media (max-width: 540px) {
       main { width: min(100% - 20px, 960px); padding-top: 24px; }
       header { align-items: center; }
       .seal { width: 48px; font-size: 1.1rem; }
       .player-shell { padding: 7px; border-radius: 10px; }
       .actions { display: grid; grid-template-columns: 1fr; }
+      .endpoint-row { flex-direction: column; }
     }
   </style>
 </head>
@@ -187,18 +213,62 @@
       <a class="button" href="scratch-src/project.json">ソースJSONを見る</a>
     </nav>
 
-    <p class="note">あなたは先手、コンピューターは後手です。先手が指すと、少し待ってからコンピューターが自動で指します。再生にはインターネット接続が必要です。</p>
+    <section class="ai-settings" aria-labelledby="ai-settings-title">
+      <h2 id="ai-settings-title">ChatGPT接続設定</h2>
+      <p>配置した中継Workerの <code>https://…/move</code> を入力します。APIキーそのものは入力しません。未設定・通信失敗時も内蔵評価で対局できます。</p>
+      <form id="endpoint-form" class="endpoint-row">
+        <input id="endpoint" type="url" inputmode="url" autocomplete="url" placeholder="https://scratch-shogi-ai.example.workers.dev/move" aria-label="AI接続先URL">
+        <button class="button primary" type="submit">保存して再読込</button>
+      </form>
+      <p id="setting-status" class="setting-status" role="status"></p>
+    </section>
+
+    <p class="note">あなたは先手、コンピューターは後手です。コンピューターは毎回、盤上移動と持ち駒打ちを含む候補一覧を作り、ChatGPTの返答が一覧内にあることを再確認してから指します。</p>
   </main>
 
   <script>
+    const storageKey = "scratchShogiAiEndpoint";
+    const endpointInput = document.querySelector("#endpoint");
+    const status = document.querySelector("#setting-status");
+    const savedEndpoint = localStorage.getItem(storageKey) || "";
+    endpointInput.value = savedEndpoint;
+
+    const extensionUrl = new URL("ai-extension.js", window.location.href);
+    if (savedEndpoint) extensionUrl.searchParams.set("endpoint", savedEndpoint);
     const projectUrl = new URL("project.sb3", window.location.href);
     const openUrl = new URL("https://turbowarp.org/");
     openUrl.searchParams.set("project_url", projectUrl.href);
+    openUrl.searchParams.set("extension", extensionUrl.href);
     document.querySelector("#open-player").href = openUrl.href;
+
+    async function checkAiConnection() {
+      if (!savedEndpoint) {
+        status.textContent = "AI接続先は未設定です。現在は内蔵AIで動作します。";
+        return;
+      }
+      if (typeof fetch !== "function") return;
+      const healthUrl = new URL(savedEndpoint);
+      healthUrl.pathname = healthUrl.pathname.replace(/\/move\/?$/, "/health");
+      status.textContent = "ChatGPT接続を確認中です…";
+      try {
+        const response = await fetch(healthUrl.href, { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(`HTTP ${response.status}`);
+        if (!data.openai_configured) {
+          status.textContent = "Workerには接続できましたが、OPENAI_API_KEYが未設定です。現在は内蔵AIになります。";
+          return;
+        }
+        status.textContent = `ChatGPT接続OK：${data.model || "設定モデル"} / reasoning ${data.reasoning_effort || "設定値"} / ${data.engine_version || "旧Worker"}`;
+      } catch {
+        status.textContent = "Workerへ接続できません。URL・配置・CORSを確認してください。現在は内蔵AIになります。";
+      }
+    }
+    void checkAiConnection();
 
     if (window.location.protocol === "http:" || window.location.protocol === "https:") {
       const embedUrl = new URL("https://turbowarp.org/embed");
       embedUrl.searchParams.set("project_url", projectUrl.href);
+      embedUrl.searchParams.set("extension", extensionUrl.href);
       embedUrl.searchParams.set("settings-button", "");
       document.querySelector("#player").src = embedUrl.href;
     } else {
@@ -206,6 +276,28 @@
       document.querySelector("#local-notice").style.display = "grid";
       document.querySelector("#open-player").style.display = "none";
     }
+
+    document.querySelector("#endpoint-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = endpointInput.value.trim();
+      if (value) {
+        let parsed;
+        try { parsed = new URL(value); } catch { status.textContent = "正しいURLを入力してください。"; return; }
+        if (parsed.protocol !== "https:" && !(parsed.protocol === "http:" && parsed.hostname === "localhost")) {
+          status.textContent = "HTTPSのURLを入力してください。";
+          return;
+        }
+        if (!/\/move\/?$/.test(parsed.pathname)) {
+          status.textContent = "Worker URLの末尾は /move にしてください。";
+          return;
+        }
+        localStorage.setItem(storageKey, parsed.href);
+      } else {
+        localStorage.removeItem(storageKey);
+      }
+      status.textContent = "保存しました。ゲームを再読み込みします。";
+      window.location.reload();
+    });
   </script>
 </body>
 </html>
