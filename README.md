@@ -24,6 +24,8 @@ GitHub Pages上で直接動作する、1人対コンピューター用の将棋�
 - `index.html` — ゲーム画面
 - `styles.css` — 盤面とレスポンシブ表示
 - `app.js` — 将棋ルールとAIエンジン
+- `assets/shogi-board.webp` — 黒漆と木目の9×9将棋盤
+- `assets/shogi-characters.webp` — 通常駒8種・成り駒6種の武将キャラクター
 - `docs/AI_CHANGELOG.md` — 変更履歴
 
 ## 現在の範囲
