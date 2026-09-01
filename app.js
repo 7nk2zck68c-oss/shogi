@@ -12,7 +12,9 @@ function inside(r,c){return r>=0&&r<9&&c>=0&&c<9}function other(s){return s==='s
 function pseudoMoves(s,r,c,attackOnly=false){const p=s.board[r][c];if(!p)return[];const out=[],add=(rr,cc)=>{if(!inside(rr,cc))return false;const q=s.board[rr][cc];if(!q||q.side!==p.side)out.push([rr,cc]);return !q};let steps;
   if(p.promoted&&goldLike.has(p.type))steps=dirs.G;else if(p.type==='K')steps=dirs.K;else if(p.type==='G')steps=dirs.G;else if(p.type==='S')steps=dirs.S;else if(p.type==='N')steps=dirs.N;else if(p.type==='P')steps=dirs.P;
   if(steps)for(const d of steps){const [dr,dc]=orient(p.side,d);add(r+dr,c+dc)}
-  const slide=[];if(p.type==='R'||(p.promoted&&p.type==='B'))slide.push([-1,0],[1,0],[0,-1],[0,1]);if(p.type==='B'||(p.promoted&&p.type==='R'))slide.push([-1,-1],[-1,1],[1,-1],[1,1]);if(p.type==='L')slide.push(orient(p.side,[-1,0]));
+  if(p.promoted&&p.type==='B')for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]])add(r+dr,c+dc);
+  if(p.promoted&&p.type==='R')for(const [dr,dc] of [[-1,-1],[-1,1],[1,-1],[1,1]])add(r+dr,c+dc);
+  const slide=[];if(p.type==='R')slide.push([-1,0],[1,0],[0,-1],[0,1]);if(p.type==='B')slide.push([-1,-1],[-1,1],[1,-1],[1,1]);if(p.type==='L'&&!p.promoted)slide.push(orient(p.side,[-1,0]));
   for(const [dr,dc] of slide)for(let n=1;n<9;n++)if(!add(r+dr*n,c+dc*n))break;return out}
 function attacked(s,r,c,by){for(let rr=0;rr<9;rr++)for(let cc=0;cc<9;cc++){const p=s.board[rr][cc];if(p?.side===by&&pseudoMoves(s,rr,cc,true).some(x=>x[0]===r&&x[1]===c))return true}return false}
 function inCheck(s,side){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(s.board[r][c]?.side===side&&s.board[r][c].type==='K')return attacked(s,r,c,other(side));return true}
