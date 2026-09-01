@@ -22,6 +22,7 @@
         <button data-level="intermediate">中級者</button>
         <button data-level="advanced">上級者</button>
         <button data-level="master">猛者</button>
+        <button data-level="hero">勇者</button>
       </div>
     </section>
     <section class="game-layout">
@@ -29,7 +30,7 @@
       <section class="board-stage" aria-label="3D将棋盤"><div class="board-wrap"><div class="files" aria-hidden="true"><span>９</span><span>８</span><span>７</span><span>６</span><span>５</span><span>４</span><span>３</span><span>２</span><span>１</span></div><div id="board" class="board" role="grid" aria-label="将棋盤"></div></div></section>
       <aside class="panel player"><h2>あなた（先手）</h2><div id="sente-hand" class="hand"></div><p id="status" class="status" aria-live="polite">あなたの手番です</p><div class="legend"><span><i class="dot legal"></i>移動可能</span><span><i class="dot last"></i>直前の手</span></div></aside>
     </section>
-    <footer>外部API・Scratch・TurboWarpは使用しません。すべての処理をこのページ内で実行します。</footer>
+    <footer>外部API・Scratch・TurboWarpは使用しません。勇者はブラウザー内の<a href="https://github.com/yaneurao/YaneuraOu" target="_blank" rel="noopener noreferrer">YaneuraOu WASM</a>（GPLv3）を使用します。</footer>
   </main>
   <dialog id="promotion"><form method="dialog"><h2>成りますか？</h2><p>この駒は成ることができます。</p><div><button value="promote">成る</button><button value="keep" class="secondary">成らない</button></div></form></dialog>
   <script type="module" src="app.js"></script>
