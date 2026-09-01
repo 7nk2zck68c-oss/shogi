@@ -26,10 +26,12 @@ GitHub Pages上で直接動作する、1人対コンピューター用の将棋�
 - `index.html` — ゲーム画面
 - `styles.css` — 盤面とレスポンシブ表示
 - `perspective.css` — 3Dバードビューと難易度ボタン
+- `mobile-3d.css` — 立体駒、先手背面表示、スマホ全画面固定
 - `app.js` — 将棋ルールとAIエンジン
 - `assets/shogi-board.webp` — 黒漆と木目の9×9将棋盤
 - `assets/shogi-characters.webp` — 通常駒8種・成り駒6種の武将キャラクター
 - `assets/shogi-characters-red.webp` — 先手用の赤い武将衣装
+- `assets/shogi-characters-red-rear.webp` — 相手方向を向く先手用背面武将
 - `assets/shogi-characters-blue.webp` — 後手用の青い武将衣装
 - `docs/AI_CHANGELOG.md` — 変更履歴
 
@@ -38,3 +40,5 @@ GitHub Pages上で直接動作する、1人対コンピューター用の将棋�
 AIは難易度に応じて最大7手先まで選択的に読むMinimax方式です。完全な詰将棋探索ではなく、深い難易度では有力候補へ探索を絞ります。打ち歩詰めの禁止など、一部の高度な将棋固有例外は今後の拡張対象です。
 
 捕獲された駒は持ち駒へ入る際に所属が捕獲側へ変わり、再び盤へ打つと所属側の赤／青衣装で表示されます。
+
+スマートフォンではゲーム画面を端末表示領域へ固定し、ピンチズームとページスクロールを無効にしています。
